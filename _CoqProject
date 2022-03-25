@@ -1,6 +1,4 @@
--Q theories EquivalenceNotCongruence
+-Q theories Playground
 -arg -w -arg -notation-overridden
 
-theories/CountUniqVars.v
-theories/Imp.v
-theories/RenameVars.v
+theories/BrokenCalculator.v
