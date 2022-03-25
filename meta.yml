@@ -1,0 +1,71 @@
+---
+fullname: Playground for Coq Code
+shortname: coq-playground
+organization: cdepillabout
+community: false
+action: true
+nix: true
+coqdoc: false
+
+synopsis: Playground for various things written in Coq
+
+description: |-
+  This repo is just a collection of unrelated Coq code.  This is mostly a
+  dumping ground of various things I'm playing around with.
+
+authors:
+- name: Dennis Gosnell
+  initial: true
+
+license:
+  fullname: 'BSD 3-Clause "New" or "Revised" License'
+  identifier: BSD-3-Clause
+
+supported_coq_versions:
+  text: 8.13 or later
+  opam: '{ >= "8.13" }'
+
+tested_coq_opam_versions:
+- version: '8.13'
+
+tested_coq_nix_versions:
+- coq_version: '8.13'
+
+documentation: |-
+  ## Documentation
+
+  ### Building
+
+  If you're using Nix, you can get into a shell with Coq available by running
+  `nix develop`:
+
+  ```console
+  $ nix develop
+  ```
+
+  You can build all the Coq files in this repo with `make`:
+
+  ```console
+  $ make
+  ```
+
+  After building, you can open up any of the files in
+  [`theories/`](./theories/) in `coqide` in order to work through the proofs.
+
+  You can regenerate the files in this repo (like `README.md`) from the
+  [`meta.yml`](./meta.yml) file by cloning
+  [`coq-community/templates`](https://github.com/coq-community/templates) and
+  running `generate.sh`:
+
+  ```console
+  $ /some/path/to/coq-community/templates/generate.sh
+  ```
+
+  You can also generate HTML documentation with `coqdoc`:
+
+  ```console
+  $ make html
+  ```
+
+---
+
