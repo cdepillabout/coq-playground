@@ -133,6 +133,19 @@ Proof.
     + auto.
     + destruct (finish a <=? start b) eqn:E.
       * *)
+  unfold selectCompatibleActivities.
+  intros l a H. induction l.
+  - auto.
+  - unfold selectCompatibleActivities' in H. fold selectCompatibleActivities' in H.
+    assert (0 <=? start a0 = true).
+    { auto. }
+    rewrite H0 in H.
+    simpl in H.
+    destruct H.
+    + subst. now constructor.
+    + Admitted.
+
+(* TODO: Try to build an inductive datatype representing selectCompatibleActivities! *)
   
 
 Theorem selectCompatibleActivitiesSorted :
