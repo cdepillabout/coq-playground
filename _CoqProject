@@ -1,4 +1,5 @@
 -Q theories Playground
 -arg -w -arg -notation-overridden
 
+theories/ActivitySelection.v
 theories/BrokenCalculator.v
