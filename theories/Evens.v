@@ -210,23 +210,41 @@ Proof.
     constructor; try auto.
   - inversion Hfor; subst. auto.
   Qed.  
+  
+Theorem selectEvens_preserves_forall :
+  forall f l select, selectEvens l = select -> Forall f l -> Forall f select.
+Proof.
+  intros f l select Hsel Hfor. generalize dependent Hsel. generalize dependent select.
+  induction Hfor; intros select Hsel.
+  - simpl in Hsel. subst. constructor.
+  - simpl in Hsel.
+    destruct (even x) eqn:E.
+    + destruct Hsel.
+      constructor; try auto.
+    + apply IHHfor. assumption.
+  Qed.  
 
 Theorem selectEvensIndPreservesSorted :
   forall l selected, selectEvensInd l selected -> StronglySorted le l -> StronglySorted le selected.
 Proof.
-  (*
-  intros l. induction l; simpl; intros selected Hsel Hsor.
-  - inversion Hsel; subst. constructor.
-  - inversion Hsel; subst; inversion Hsor; subst.
-    + specialize (IHl _ H1 H2).
-      constructor; try assumption.
-  *)
   intros l selected Hsel Hsor. generalize dependent Hsel. generalize dependent selected.
-  induction Hsor; intros selected Hsel.
-  - inversion Hsel; subst. constructor.
-  - inversion Hsel; subst.
-    + constructor.
-      * apply IHHsor. assumption.
-      * apply selectEvensInd_preserves_forall with l; auto.
-    + now apply IHHsor.
+  induction Hsor; intros selected Hsel; inversion Hsel; subst.
+  - constructor.
+  - constructor.
+    * now apply IHHsor.
+    * apply selectEvensInd_preserves_forall with l; auto.
+  - now apply IHHsor.
+  Qed.
+  
+Theorem selectEvensPreservesSorted :
+  forall l selected, StronglySorted le l -> selectEvens l = selected -> StronglySorted le selected.
+Proof.
+  intros l selected Hsor. generalize dependent selected.
+  induction Hsor; intros selected Hsel; inversion Hsel; subst.
+  - constructor.
+  - simpl in *. destruct (even a) eqn:E.
+    * constructor.
+      + now apply IHHsor.
+      + apply selectEvens_preserves_forall with l; auto.
+    * now apply IHHsor.
   Qed.
