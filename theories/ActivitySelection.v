@@ -203,4 +203,4 @@ Proof.
   - simpl. constructor.
     + inversion IHStronglySorted; subst.
       * admit.
-      *  
+      * Admitted. 
