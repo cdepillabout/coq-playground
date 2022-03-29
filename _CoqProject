@@ -2,5 +2,7 @@
 -arg -w -arg -notation-overridden
 
 theories/ActivitySelection.v
+theories/ActivitySelectionRev.v
 theories/BrokenCalculator.v
 theories/Evens.v
+theories/NonEmptyList.v
