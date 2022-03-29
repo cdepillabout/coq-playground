@@ -52,6 +52,13 @@ Example example_activities : list Activity :=
   ; example_act_10
   ; example_act_11
   ].
+  
+Example example_compatible_activities : list Activity :=
+  [ example_act_1
+  ; example_act_4
+  ; example_act_8
+  ; example_act_11
+  ].
 
 Definition FinishBE (a b : Activity): Prop := finish a <= finish b.
 
@@ -88,9 +95,62 @@ Fixpoint selectCompatibleActivities' (fin : nat) (l : list Activity) : list Acti
 Definition selectCompatibleActivities (l : list Activity) : list Activity :=
   selectCompatibleActivities' 0 l.
   
-Compute selectCompatibleActivities example_activities.
+Check selectCompatibleActivities example_activities = example_compatible_activities.
 
+Inductive selectCompatibleActivitiesInd : list Activity -> list Activity -> Prop :=
+  | SelectCompatibleActivitiesEmpty : selectCompatibleActivitiesInd [] []
+  | SelectCompatibleActivitiesSingle : forall act, selectCompatibleActivitiesInd [act] [act]
+  | SelectCompatibleActivitiesInclude :
+      forall lastSelected acts newAct selected, 
+      finish lastSelected <= start newAct ->
+      selectCompatibleActivitiesInd acts (selected ++ [lastSelected]) ->
+      selectCompatibleActivitiesInd (acts ++ [newAct]) (selected ++ [lastSelected] ++ [newAct])
+  | SelectCompatibleActivitiesSkip :
+      forall skippedAct acts selected, 
+      selectCompatibleActivitiesInd acts selected ->
+      selectCompatibleActivitiesInd (acts ++ [skippedAct]) selected
+  .
 
+Example finish_example_1_4 : finish example_act_1 <= start example_act_4. Proof. simpl. lia. Qed.
+
+Example selectCompatibleActivitiesInd_example1 :
+    selectCompatibleActivitiesInd
+      [example_act_1; example_act_2; example_act_3; example_act_4; example_act_5]
+      [example_act_1; example_act_4] :=
+  SelectCompatibleActivitiesSkip _ _ _ (
+  SelectCompatibleActivitiesInclude example_act_1 _ example_act_4 [] finish_example_1_4 (
+  SelectCompatibleActivitiesSkip _ _ _ (
+  SelectCompatibleActivitiesSkip _ _ _ (
+  SelectCompatibleActivitiesSingle _
+  )))).
+  
+Lemma append_something_ne_nil : forall A (a : A) l, l ++ [a] = [] -> False.
+Proof.
+  intros A a l. induction l.
+  - simpl. intro Contra. discriminate.
+  - simpl. intro Contra. discriminate.
+  Qed.
+
+Example selectCompatibleActivitiesInd_example2 :
+  selectCompatibleActivitiesInd [] [example_act_1] -> False.
+Proof.
+  intros H. inversion H; subst.
+  - now apply append_something_ne_nil in H0.
+  - now apply append_something_ne_nil in H0.
+  Qed.
+
+(* TODO: Rewrite everything here by building up the compatible activities in selectCompatibleActivities
+   in reverse, so we build up a normal list. *)
+
+(*
+Theorem selectCompatibleActivities_equal : forall l selected,
+  selectCompatibleActivitiesInd l selected -> selectCompatibleActivities l = selected.
+Proof.
+  unfold selectCompatibleActivities.
+  intros l selected H. induction H; auto.
+  -
+  
+*) 
 
 Print list_ind.
 
