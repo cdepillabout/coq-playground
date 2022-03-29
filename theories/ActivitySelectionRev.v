@@ -94,6 +94,8 @@ Definition selectCompatibleActivities (l : list Activity) : list Activity :=
   
 Check selectCompatibleActivities example_activities = example_compatible_activities.
 
+(*
+
 Inductive selectCompatibleActivitiesInd : list Activity -> list Activity -> Prop :=
   | SelectCompatibleActivitiesEmpty : selectCompatibleActivitiesInd [] []
   | SelectCompatibleActivitiesSingle : forall act, selectCompatibleActivitiesInd [act] [act]
@@ -261,3 +263,5 @@ Proof.
     + inversion IHStronglySorted; subst.
       * admit.
       * Admitted. 
+      
+*)
