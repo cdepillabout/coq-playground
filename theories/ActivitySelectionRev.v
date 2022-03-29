@@ -71,16 +71,16 @@ About FinishBE.
 Fixpoint selectCompatibleActivitiesNE (l : non_empty_list Activity) : non_empty_list Activity :=
   match l with
   | NonEmptyListSingle h => NonEmptyListSingle h
-  | NonEmptyList h ts => 
+  | NonEmptyList newAct ts => 
       match selectCompatibleActivitiesNE ts with
       | NonEmptyListSingle onlySelected =>
-          if finish h <=? start onlySelected then
-            NonEmptyList h (NonEmptyListSingle onlySelected)
+          if finish newAct <=? start onlySelected then
+            NonEmptyList newAct (NonEmptyListSingle onlySelected)
           else
             NonEmptyListSingle onlySelected
       | NonEmptyList firstSelected selected => 
-          if finish h <=? start firstSelected then
-            NonEmptyList h (NonEmptyList firstSelected selected)
+          if finish newAct <=? start firstSelected then
+            NonEmptyList newAct (NonEmptyList firstSelected selected)
           else
             NonEmptyList firstSelected selected
       end
@@ -93,6 +93,66 @@ Definition selectCompatibleActivities (l : list Activity) : list Activity :=
   end.
   
 Check selectCompatibleActivities example_activities = example_compatible_activities.
+
+Inductive selectCompatibleActivitiesInd : list Activity -> list Activity -> Prop :=
+  | SelectCompatibleActivitiesEmpty : selectCompatibleActivitiesInd [] []
+  | SelectCompatibleActivitiesSingle: forall act, selectCompatibleActivitiesInd [act] [act]
+  | SelectCompatibleActivitiesInclude :
+      forall newAct acts lastSelected selected, 
+      finish newAct <= start lastSelected ->
+      selectCompatibleActivitiesInd acts (lastSelected :: selected) ->
+      selectCompatibleActivitiesInd (newAct :: acts) (newAct :: lastSelected :: selected)
+  | SelectCompatibleActivitiesSkip :
+      forall skippedAct acts selected,
+      selectCompatibleActivitiesInd acts selected ->
+      selectCompatibleActivitiesInd (skippedAct :: acts) selected
+  .
+
+Example finish_example_2_4 : finish example_act_2 <= start example_act_4. Proof. simpl. lia. Qed.
+
+Example selectCompatibleActivitiesInd_example1 :
+    selectCompatibleActivitiesInd
+      [ example_act_1; example_act_2; example_act_3; example_act_4]
+      [example_act_2; example_act_4] :=
+  SelectCompatibleActivitiesSkip _ _ _ (
+  SelectCompatibleActivitiesInclude example_act_2 _ example_act_4 _ finish_example_2_4 (
+  SelectCompatibleActivitiesSkip _ _ _ (
+  SelectCompatibleActivitiesSingle _
+  )))
+  .
+  
+Example selectCompatibleActivitiesInd_example2 :
+    selectCompatibleActivitiesInd
+      [ example_act_1; example_act_2; example_act_3; example_act_4]
+      [example_act_2; example_act_4].
+Proof.
+  apply SelectCompatibleActivitiesSkip.
+  apply SelectCompatibleActivitiesInclude. { simpl. lia. }
+  apply SelectCompatibleActivitiesSkip.
+  constructor.
+Qed.
+
+Example selectCompatibleActivitiesInd_example3 :
+    selectCompatibleActivitiesInd example_activities example_compatible_activities.
+Proof.
+  apply SelectCompatibleActivitiesSkip.
+  apply SelectCompatibleActivitiesInclude. { simpl. lia. }
+  apply SelectCompatibleActivitiesSkip.
+  apply SelectCompatibleActivitiesInclude. { simpl. lia. }
+  apply SelectCompatibleActivitiesSkip.
+  apply SelectCompatibleActivitiesSkip.
+  apply SelectCompatibleActivitiesSkip.
+  apply SelectCompatibleActivitiesSkip.
+  apply SelectCompatibleActivitiesInclude. { simpl. lia. }
+  apply SelectCompatibleActivitiesSkip.
+  constructor.
+Qed.
+
+Theorem selectCompatibleActivities_from_selectCompatibleActivitiesInd : forall l selected,
+  selectCompatibleActivitiesInd l selected -> selectCompatibleActivities l = selected.
+Proof.
+  (* TODO: THIS! *)
+  Admitted.
 
 (*
 
