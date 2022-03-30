@@ -20,3 +20,10 @@ Fixpoint list_to_non_empty_list {A} (a : A) (l : list A) : non_empty_list A :=
   | [] => NonEmptyListSingle a
   | h :: t => NonEmptyList a (list_to_non_empty_list h t)
   end.
+  
+Lemma undo_non_empty_to_list : 
+  forall A l (x : A), non_empty_list_to_list (list_to_non_empty_list x l) = x :: l.
+Proof.
+  intros A l. induction l; auto.
+  simpl. rewrite IHl. auto.
+Qed.
