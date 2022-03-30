@@ -103,20 +103,23 @@ Inductive selectCompatibleActivitiesInd : list Activity -> list Activity -> Prop
       selectCompatibleActivitiesInd acts (lastSelected :: selected) ->
       selectCompatibleActivitiesInd (newAct :: acts) (newAct :: lastSelected :: selected)
   | SelectCompatibleActivitiesSkip :
-      forall skippedAct acts selected,
-      selectCompatibleActivitiesInd acts selected ->
-      selectCompatibleActivitiesInd (skippedAct :: acts) selected
+      forall skippedAct acts lastSelected selected,
+      finish skippedAct > start lastSelected ->
+      selectCompatibleActivitiesInd acts (lastSelected :: selected) ->
+      selectCompatibleActivitiesInd (skippedAct :: acts) (lastSelected :: selected)
   .
 
 Example finish_example_6_10 : finish example_act_6 <= start example_act_10. Proof. simpl. lia. Qed.
+Example finish_example_8_10 : finish example_act_8 > start example_act_10. Proof. simpl. lia. Qed.
+Example finish_example_5_6 : finish example_act_5 > start example_act_6. Proof. simpl. lia. Qed.
 
 Example selectCompatibleActivitiesInd_example1 :
     selectCompatibleActivitiesInd
       [ example_act_5; example_act_6; example_act_8; example_act_10]
       [example_act_6; example_act_10] :=
-  SelectCompatibleActivitiesSkip _ _ _ (
+  SelectCompatibleActivitiesSkip _ _ _ _ finish_example_5_6 (
   SelectCompatibleActivitiesInclude _ _ _ _ finish_example_6_10 (
-  SelectCompatibleActivitiesSkip _ _ _ (
+  SelectCompatibleActivitiesSkip _ _ _ _ finish_example_8_10 (
   SelectCompatibleActivitiesSingle _
   )))
   .
@@ -126,24 +129,24 @@ Example selectCompatibleActivitiesInd_example2 :
       [ example_act_5; example_act_6; example_act_8; example_act_10]
       [example_act_6; example_act_10].
 Proof.
-  apply SelectCompatibleActivitiesSkip.
+  apply SelectCompatibleActivitiesSkip. { simpl. lia. }
   apply SelectCompatibleActivitiesInclude. { simpl. lia. }
-  apply SelectCompatibleActivitiesSkip.
+  apply SelectCompatibleActivitiesSkip. { simpl. lia. }
   constructor.
 Qed.
 
 Example selectCompatibleActivitiesInd_example3 :
     selectCompatibleActivitiesInd example_activities example_compatible_activities.
 Proof.
-  apply SelectCompatibleActivitiesSkip.
-  apply SelectCompatibleActivitiesSkip.
-  apply SelectCompatibleActivitiesSkip.
+  apply SelectCompatibleActivitiesSkip. { simpl. lia. }
+  apply SelectCompatibleActivitiesSkip. { simpl. lia. }
+  apply SelectCompatibleActivitiesSkip. { simpl. lia. }
   apply SelectCompatibleActivitiesInclude. { simpl. lia. }
-  apply SelectCompatibleActivitiesSkip.
+  apply SelectCompatibleActivitiesSkip. { simpl. lia. }
   apply SelectCompatibleActivitiesInclude. { simpl. lia. }
-  apply SelectCompatibleActivitiesSkip.
-  apply SelectCompatibleActivitiesSkip.
-  apply SelectCompatibleActivitiesSkip.
+  apply SelectCompatibleActivitiesSkip. { simpl. lia. }
+  apply SelectCompatibleActivitiesSkip. { simpl. lia. }
+  apply SelectCompatibleActivitiesSkip. { simpl. lia. }
   apply SelectCompatibleActivitiesInclude. { simpl. lia. }
   constructor.
 Qed.
@@ -179,25 +182,28 @@ Proof.
 Lemma non_empty_to_list :
   forall A x l (a : A), non_empty_list_to_list x = (a :: l) -> x = list_to_non_empty_list a l.
 Proof.
-  (*
-  intros A x. induction x.
-  - simpl. intros. now inversion H; subst.
-  - simpl. intros. inversion H; subst.
-    destruct x; simpl.
-  *)
   intros A x l. generalize dependent x.
   induction l; simpl; intros.
   - destruct x; auto.
     + simpl in H. inversion H. now subst.
     + simpl in H. inversion H; subst.
       destruct x. simpl in H2. discriminate. simpl in H2. discriminate.
-  - destruct x eqn:E.
+  - destruct x.
     + simpl in H. discriminate.
     + simpl in H. inversion H; subst.
       specialize (IHl _ _ H2). now subst.
   Qed. 
+  
+Lemma list_to_non_empty :
+  forall A x l (a : A), x = list_to_non_empty_list a l -> non_empty_list_to_list x = (a :: l).
+Proof.
+  intros A x l. generalize dependent x.
+  induction l; simpl; intros.
+  - subst. auto.
+  - subst. simpl. f_equal. now apply IHl.
+  Qed.
 
-Theorem selectCompat_plus_one_more_compat2 :
+Theorem selectCompat_plus_one_more_compat :
   forall l lastSelected selected a,
   selectCompatibleActivities l = lastSelected :: selected ->
   finish a <= start lastSelected ->
@@ -219,48 +225,39 @@ Proof.
     rewrite (leb_correct _ _ Hfin); simpl.
     now rewrite undo_non_empty_to_list.
   Qed.
+  
+Theorem selectCompat_without_one_more_compat :
+  forall l lastSelected selected a,
+  selectCompatibleActivities l = lastSelected :: selected ->
+  finish a > start lastSelected ->
+  selectCompatibleActivities (a :: l) = lastSelected :: selected.
+Proof.
+  intros l lastSelected selected a Hsel Hfin.
+  destruct l,selected; try discriminate; simpl in *.
+  - assert
+      (Hselrewrite: selectCompatibleActivitiesNE (list_to_non_empty_list a0 l) = 
+        list_to_non_empty_list lastSelected []).
+    { now apply non_empty_to_list in Hsel. }
+    rewrite Hselrewrite; simpl.
+    assert (Hnotfin: finish a <=? start lastSelected = false).
+    { unfold gt in  Hfin. now apply leb_correct_conv. }
+    now rewrite Hnotfin.
+  - assert
+      (Hselrewrite: selectCompatibleActivitiesNE (list_to_non_empty_list a0 l) = 
+        list_to_non_empty_list lastSelected (a1 :: selected)).
+    { now apply non_empty_to_list in Hsel. }
+    rewrite Hselrewrite; simpl.
+    rewrite (leb_correct_conv _ _ Hfin); simpl.
+    now rewrite undo_non_empty_to_list.
+  Qed.
 
 Theorem selectCompatibleActivities_from_selectCompatibleActivitiesInd : forall l selected,
   selectCompatibleActivitiesInd l selected -> selectCompatibleActivities l = selected.
 Proof.
-  induction l.
-  - simpl. intros selected H. now inversion H; subst.
-  - intros selected Hsel.
-    inversion Hsel; subst; auto.
-    + specialize (IHl _ H3).
-      simpl.
-      rewrite <- IHl in *.
-      simpl.
-
-
-  (* unfold selectCompatibleActivities. *)
-  (*
-  intros l selected H.
-  induction H; auto.
-  - simpl.
-    assert (Hacts: length acts <> 0).
-    { now apply some_selects_means_some_acts with (selected := selected) (lastSelected := lastSelected). }
-    destruct acts; try discriminate; clear Hacts.
-    unfold selectCompatibleActivities in IHselectCompatibleActivitiesInd.
-    change (list_to_non_empty_list newAct (a :: acts)) with (NonEmptyList newAct (list_to_non_empty_list a acts)).
-    rewrite <- IHselectCompatibleActivitiesInd.
-    simpl.
-    
-    unfold list_to_non_empty_list. simpl.
-    simpl.
-    destruct (list_to_non_empty_list a acts) eqn:E; simpl.
-    * simpl in IHselectCompatibleActivitiesInd.
-      apply non_empty_list_is_single in E. destruct E; subst.
-      inversion IHselectCompatibleActivitiesInd; subst. clear IHselectCompatibleActivitiesInd. 
-      now rewrite (leb_correct _ _ H).
-    * apply non_empty_list_is_list in E. destruct E. destruct H2. destruct H2. destruct H2; subst.
-      simpl. unfold selectCompatibleActivitiesNE in IHselectCompatibleActivitiesInd.
-      fold selectCompatibleActivitiesNE in *.
-      destruct (list_to_non_empty_list x x0) eqn:F.
-      + simpl in *.
-        apply non_empty_list_is_single in F. destruct F; subst.
-        simpl in *.
-  *)
+  intros l selected H; induction H; auto.
+  - apply selectCompat_plus_one_more_compat; auto.
+  - apply selectCompat_without_one_more_compat; auto.
+  Qed.
         
 (*
 
