@@ -258,7 +258,176 @@ Proof.
   - apply selectCompat_plus_one_more_compat; auto.
   - apply selectCompat_without_one_more_compat; auto.
   Qed.
-        
+
+(*
+Theorem selectCompatActs_one_more_finish_gt : forall l sel a,
+  selectCompatibleActivities l = [sel] ->
+  finish a > start sel ->
+  selectCompatibleActivities (a :: l) = [sel].
+Proof.
+  induction l; intros sel b Hsel Hfin.
+  - simpl in Hsel. discriminate.
+  - 
+*)
+
+Lemma selectCompatAct_single :
+  forall l a sel,
+  selectCompatibleActivities (a :: l) = [sel] -> 
+  ((a = sel) /\ (l = [])) \/
+    ((finish a > start sel) /\ selectCompatibleActivities l = [sel]).
+Proof.
+  induction l.
+  - simpl. intros. inversion H. subst. left. auto.
+  - intros b sel H. right. simpl in IHl.
+    simpl in H.
+    destruct (selectCompatibleActivitiesNE (list_to_non_empty_list a l)) eqn:F.
+    + assert (non_empty_list_to_list (selectCompatibleActivitiesNE (list_to_non_empty_list a l)) = [a0]).
+      { apply (f_equal non_empty_list_to_list) in F. simpl in F. assumption. }
+      specialize (IHl _ _ H0). destruct IHl.
+      * destruct H1; subst. simpl in F. simpl in H0. clear H0 F.
+        destruct (finish b <=? start a0) eqn:E.
+        -- simpl in H. discriminate.
+        -- simpl in H. inversion H; subst; clear H. admit.
+      * destruct H1. clear H0 F.
+        destruct (finish b <=? start a0) eqn:E.
+        -- simpl in H. discriminate.
+        -- simpl in H. inversion H; subst. clear H. split. admit.
+           apply selectCompat_without_one_more_compat; assumption.
+    + admit.
+  Admitted.
+
+Theorem selCompatAct_from_ne : 
+  forall l a selected,
+  non_empty_list_to_list (selectCompatibleActivitiesNE (list_to_non_empty_list a l)) = selected ->
+  selectCompatibleActivities (a :: l) = selected.
+Proof. auto. Qed.
+
+(*
+Lemma selectCompatAct_multiple :
+  forall l b sel1 sel2 selected,
+  selectCompatibleActivities (b :: l) = sel1 :: sel2 :: selected -> 
+  or
+    ((finish b <= start sel2) /\ selectCompatibleActivities l = sel2 :: selected /\ b = sel1)
+    ((finish b > start sel1) /\ selectCompatibleActivities l = sel1 :: sel2 :: selected).
+Proof.
+  induction l; intros b sel1 sel2 selected.
+  - intros. simpl in *. discriminate.
+  - intros Hsel.
+  
+    (* TODO: I think what I'm missing here is a guarantee that the input
+       list into selectCompatibleActivities is in order of start times.
+       I think selectCompatibleActivitiesInd has this property.
+       
+       I should prove it! *)
+       
+    destruct (finish b <=? start sel2) eqn:HFinBleStartSel2.
+    * destruct selected.
+      + left. split. now apply leb_complete in HFinBleStartSel2.
+        apply non_empty_to_list in Hsel.
+        simpl in Hsel.
+        destruct (selectCompatibleActivitiesNE (list_to_non_empty_list a l)) eqn:E.
+        -- assert (finish b <=? start a0 = true).
+           { destruct (finish b <=? start a0). auto. inversion Hsel. }
+           rewrite H in Hsel. inversion Hsel; subst. clear Hsel.
+           admit.
+        -- assert (finish b <=? start a0 = false).
+           { destruct (finish b <=? start a0); auto. discriminate. }
+           rewrite H in Hsel. inversion Hsel; subst. clear Hsel.
+           apply (f_equal non_empty_list_to_list) in E. simpl in E.
+           apply selCompatAct_from_ne in E.
+           specialize (IHl _ _ _ _ E).
+           destruct IHl.
+           ** destruct H0. destruct H1; subst.
+      + 
+    
+    
+    
+     left. split. now apply leb_complete in HFinBleStartSel2.
+      simpl in Hsel.
+      destruct (selectCompatibleActivitiesNE (list_to_non_empty_list a l)) eqn:F.
+      + rewrite HFinBleStartSel2 in Hsel.
+
+Theorem selectCompatibleActivitiesInd_from_selectCompatibleActivities : forall l selected,
+  selectCompatibleActivities l = selected -> selectCompatibleActivitiesInd l selected.
+Proof. 
+  induction l as [ | a l IHl].
+  - simpl. intros. subst. constructor.
+  - destruct selected.
+    { admit. }
+    destruct selected.
+    * intros. apply selectCompatAct_single in H. destruct H.
+      + destruct H; subst. constructor.
+      + destruct H. specialize (IHl _ H0).
+        apply SelectCompatibleActivitiesSkip; assumption.
+    * 
+*)
+
+
+(*
+Theorem selectCompatibleActivitiesInd_from_selectCompatibleActivities : forall l selected,
+  selectCompatibleActivities l = selected -> selectCompatibleActivitiesInd l selected.
+Proof. 
+  induction l as [ | a1 l IHl];
+    destruct selected as [ | sel1 [ | sel2 selected ] ]; intros Hsel.
+  - constructor.
+  - discriminate.
+  - discriminate.
+  - admit.
+  - destruct l.
+    + simpl in Hsel. inversion Hsel. constructor.
+    + 
+  -  
+*)
+
+
+(*
+Theorem selectCompatibleActivitiesInd_from_selectCompatibleActivities : forall l selected,
+  selectCompatibleActivities l = selected -> selectCompatibleActivitiesInd l selected.
+Proof. 
+  induction l as [ | a1 [ | a2 l ] IHl];
+    destruct selected as [ | sel1 [ | sel2 selected ] ]; intros Hsel.
+  - constructor.
+  - discriminate.
+  - discriminate.
+  - discriminate.
+  - inversion Hsel; subst. constructor.
+  - discriminate.
+  - admit. (* discriminate *)
+  - admit.
+  - 
+*)
+
+
+ 
+(*
+   simpl in Hsel.
+    apply non_empty_to_list in Hsel. simpl in Hsel.
+    assert (selectCompatibleActivitiesNE (list_to_non_empty_list a2 l) = NonEmptyListSingle a2).
+    { destruct l.
+      + reflexivity.
+      + assert (forall {A} (x : A) y l, list_to_non_empty_list x (y :: l) = NonEmptyList x (list_to_non_empty_list y l)).
+        { now simpl. }
+        rewrite H in *.
+        destruct (selectCompatibleActivitiesNE (NonEmptyList a2 (list_to_non_empty_list a l))) eqn:E.
+        - destruct (finish a1 <=? start a0) eqn:F.
+          * discriminate.
+          * inversion Hsel; subst. clear Hsel.
+            simpl in E.
+        simpl in Hsel.
+        simpl.
+       
+  - 
+  - destruct selected as [|sel2 selected]; destruct l'.
+    + inversion Hsel; subst. constructor.
+    + admit.
+    + simpl in Hsel. discriminate.
+    + destruct (finish act <=? start sel2) eqn:E.
+    + simpl in Hsel.
+      apply non_empty_to_list in Hsel.
+      simpl in *.
+      unfold selectCompatibleActivitiesNE in Hsel.
+      
+*)
 (*
 
 Inductive selectCompatibleActivitiesInd : list Activity -> list Activity -> Prop :=
