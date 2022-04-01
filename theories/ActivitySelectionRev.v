@@ -10,6 +10,17 @@ From Playground Require Import NonEmptyList.
 
 Import ListNotations.
 
+(*
+Definition exa : Prop := forall (x y : nat), nat -> S x = x.
+
+Check forall x, S x = x -> nat.
+
+Definition exb : Prop -> Prop := fun p => forall (x y : nat), nat -> S x = x -> p.
+
+Check exb.
+
+Definition exc : Type := forall (x : nat), Prop -> nat.
+*)
 
 Record Activity : Set := mkActivity
  { start : nat
